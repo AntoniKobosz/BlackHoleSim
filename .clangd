@@ -1,5 +1,0 @@
-CompileFlags:
-  Add:
-     - -I/home/antek/Documents/MyCFolder/SkyRay/include
-  Compiler: g++
-IndentWidth: 8
