@@ -2,3 +2,4 @@ build/*
 .clangd
 .clang-format
 screenshot*.png
+stare/*
