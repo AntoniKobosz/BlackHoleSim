@@ -1,0 +1,2 @@
+assets/starmap_2020_8k.hdr filter=lfs diff=lfs merge=lfs -text
+assets/starmap_2020_8k.png filter=lfs diff=lfs merge=lfs -text
