@@ -241,7 +241,7 @@ vec4 NewDirection(vec3 WorldCoords /*Spherical*/ , vec3 direction /*cartesian*/)
 	float stepSize = 0.03;
 
 	State state4, state5;
-	float eps = 0.5 * 1e-4; // error tolerance
+	float eps = 0.5 * 1e-5; // error tolerance
 	float h = 0.01; // timestep
 
 	for(int i = 0; i < 4000; i++){

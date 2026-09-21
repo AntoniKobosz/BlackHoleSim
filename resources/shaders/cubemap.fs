@@ -13,7 +13,8 @@ vec2 SampleSphericalMap(vec3 dir)
 {
 	// biegun sfery wzdłuż OY
 	vec2 uv = vec2(atan(dir.z, dir.x), acos(dir.y)); // u(-pi,pi) / v(0, pi) 
-	uv *= vec2(0.15915494,0.31830988); // (1/2pi, 1/pi) uv.x += 0.5; // 
+	uv *= vec2(0.15915494,0.31830988); // (1/2pi, 1/pi)
+	uv.x += 0.5; // u(0,1) v(0,1)
 
 	return uv;
 }

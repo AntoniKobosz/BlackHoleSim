@@ -3,9 +3,6 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
-#include <atomic>
-#include <stdio.h>
-#include <thread>
 
 static TextureCubemap GenTextureCubemap(Texture2D panorama, int size,
                                         int format);
@@ -52,7 +49,7 @@ int main() {
     DisableCursor();
 
     Shader shader = GetBlackHoleShader(SkyRayConfig::rs);
-    Model skybox = GetSkybox(shader, "assets/starmap_2020_4k.hdr");
+    Model skybox = GetSkybox(shader, "assets/starmap_2020_8k.hdr");
     Camera3D camera = GetCamera();
 
     Shader gridShdr = LoadShader("resources/shaders/gridShdr.vs",
