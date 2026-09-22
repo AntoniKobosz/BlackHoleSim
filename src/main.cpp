@@ -45,6 +45,7 @@ int main() {
     // InitWindow(640, 480, "SkyRay");
     // InitWindow(840, 680, "SkyRay");
     InitWindow(1200, 900, "SkyRay");
+    // InitWindow(2560, 1440, "SkyRay");
     ToggleFullscreen();
     DisableCursor();
 
@@ -68,11 +69,12 @@ int main() {
         if (IsKeyPressed(KEY_O))
             SkyRayConfig::SHOW_DEBUG = !SkyRayConfig::SHOW_DEBUG;
 
-        // double speed = .02 * 20;
+        // double speed = .01 * 20;
         // double dt = GetFrameTime();
         // // printf("%.6f\n", dt);
         // th += dt * speed;
-        // camera.position = 6.0 * (Vector3){(float)cos(th), 0, (float)sin(th)};
+        // camera.position = (Vector3){(float)cos(th), 0, (float)sin(th)}
+        // * 6.0f;
         //
         BeginMode3D(camera);
 
@@ -88,9 +90,13 @@ int main() {
             DrawFPS(10, 10);
             DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
                      10, 50, 20, LIME);
+            // DrawText(
+            //     TextFormat("UseSphericaL: %d", SkyRayConfig::USE_SPHERICAL),
+            //     110, 10, 20, LIME);
             DrawText(
-                TextFormat("UseSphericaL: %b", SkyRayConfig::USE_SPHERICAL), 110,
-                10, 20, LIME);
+                SkyRayConfig::USE_SPHERICAL ? "Spherical" : "Cartesian",
+                110, 10, 20, LIME);
+
             // DrawText(TextFormat("Slices = %d", Slices), 10, 90, 20, LIME);
             // DrawText(TextFormat("GridWidth = %.2f", GridWidth), 10, 130, 20,
             //          LIME);

@@ -143,10 +143,10 @@ float StateError(State s1, State s2)
 {
         // różnica między stanami
         // na razie prosty wzór
-        return max((s1.phi - s2.phi) * s1.r * sin(s1.th),
+        return max(abs((s1.phi - s2.phi) * s1.r * sin(s1.th)),
                 max(
-                        max(s1.r - s2.r, s1.dr - s2.dr),
-                        max((s1.th - s2.th) * s1.r, (s1.dth - s2.dth) * s1.r)
+                        max(abs(s1.r - s2.r), abs(s1.dr - s2.dr)),
+                        max(abs(s1.th - s2.th) * s1.r, abs(s1.dth - s2.dth) * s1.r)
                 ));
 }
 State EulerStep(State state, float E, float L, float stepSize)
@@ -232,10 +232,10 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
                 );
 
         State state4, state5;
-        float eps = 0.5 * 1e-5; // error tolerance
+        float eps = 0.5 * 1e-3; // error tolerance
         float h = 0.03; // first timestep
 
-        for (int i = 0; i < 400; i++) {
+        for (int i = 0; i < 600; i++) {
                 if (passedHorison) break;
                 // state = EulerStep(state, E, L, h);
                 // state = RK4Step(state, E, L, h + (state.r-rs)/800. * 0.0);
@@ -268,17 +268,59 @@ struct StateCart {
         vec3 xyz;
         vec3 dxyz;
 };
-
-StateCart EulerStepCart(StateCart state, float h) {
+StateCart CartSlopeIncr(StateCart state, float h) {
         float InvR = 1.0 / length(state.xyz);
-
         float s = dot(normalize(state.xyz), state.dxyz);
         float a = 3.0 / 2.0 * rs * (InvR * InvR * InvR) * (-dot(state.dxyz, state.dxyz) + s * s);
 
-        vec3 old_pos = state.xyz;
-        state.xyz += state.dxyz * h;
-        state.dxyz += a * old_pos * h;
+        return StateCart(state.dxyz * h, a * state.xyz * h);
+}
+
+StateCart EulerStepCart(StateCart state, float h) {
+        StateCart slope = CartSlopeIncr(state, h);
+        state.xyz += slope.xyz;
+        state.dxyz += slope.dxyz;
         return state;
+}
+float supremum(vec3 v) {
+        return max(max(abs(v.x), abs(v.y)), abs(v.z));
+}
+float StateCartError(StateCart s1, StateCart s2) {
+        return max(supremum(s1.xyz - s2.xyz), supremum(s1.dxyz - s2.dxyz));
+        // return max(distance(s1.xyz, s2.xyz), distance(s1.dxyz, s2.dxyz));
+}
+void RK45StepCart(StateCart state, float h, out StateCart state4, out StateCart state5)
+{
+        StateCart k1 = CartSlopeIncr(state, h);
+        StateCart k2 = CartSlopeIncr(StateCart(
+                                state.xyz + k1.xyz * B21,
+                                state.dxyz + k1.dxyz * B21
+                        ), h);
+        StateCart k3 = CartSlopeIncr(StateCart(
+                                state.xyz + k1.xyz * B31 + k2.xyz * B32,
+                                state.dxyz + k1.dxyz * B31 + k2.dxyz * B32
+                        ), h);
+        StateCart k4 = CartSlopeIncr(StateCart(
+                                state.xyz + k1.xyz * B41 + k2.xyz * B42 + k3.xyz * B43,
+                                state.dxyz + k1.dxyz * B41 + k2.dxyz * B42 + k3.dxyz * B43
+                        ), h);
+        StateCart k5 = CartSlopeIncr(StateCart(
+                                state.xyz + k1.xyz * B51 + k2.xyz * B52 + k3.xyz * B53 + k4.xyz * B54,
+                                state.dxyz + k1.dxyz * B51 + k2.dxyz * B52 + k3.dxyz * B53 + k4.dxyz * B54
+                        ), h);
+        StateCart k6 = CartSlopeIncr(StateCart(
+                                state.xyz + k1.xyz * B61 + k2.xyz * B62 + k3.xyz * B63 + k4.xyz * B64 + k5.xyz * B65,
+                                state.dxyz + k1.dxyz * B61 + k2.dxyz * B62 + k3.dxyz * B63 + k4.dxyz * B64 + k5.dxyz * B65
+                        ), h);
+
+        state4 = StateCart(
+                        state.xyz + k1.xyz * c1 + k3.xyz * c3 + k4.xyz * c4 + k5.xyz * c5,
+                        state.dxyz + k1.dxyz * c1 + k3.dxyz * c3 + k4.dxyz * c4 + k5.dxyz * c5
+                );
+        state5 = StateCart(
+                        state.xyz + k1.xyz * C1 + k3.xyz * C3 + k4.xyz * C4 + k5.xyz * C5 + k6.xyz * C6,
+                        state.dxyz + k1.dxyz * C1 + k3.dxyz * C3 + k4.dxyz * C4 + k5.dxyz * C5 + k6.dxyz * C6
+                );
 }
 
 vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
@@ -287,9 +329,24 @@ vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
         passedHorison = r <= rs;
         StateCart state = StateCart(WorldCoords, direction);
 
+        StateCart state4, state5;
+        float eps = 0.5 * 1e-3;
+
         float h = 0.03;
-        for (int i = 0; i < 400; i++) {
-                state = EulerStepCart(state, h);
+        for (int i = 0; i < 600; i++) {
+                // state = EulerStepCart(state, h);
+
+                RK45StepCart(state, h, state4, state5);
+                float error = StateCartError(state4, state5);
+                float factor = 0.9 * pow(eps / max(error, 1e-10), 0.2);
+                factor = clamp(factor, 0.2, 2.0);
+
+                h *= factor;
+
+                if (error < eps) {
+                        // akceptacja
+                        state = state5;
+                }
 
                 r = length(state.xyz);
                 if (r <= rs) {
