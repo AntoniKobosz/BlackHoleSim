@@ -88,6 +88,9 @@ int main() {
             DrawFPS(10, 10);
             DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
                      10, 50, 20, LIME);
+            DrawText(
+                TextFormat("UseSphericaL: %b", SkyRayConfig::USE_SPHERICAL), 110,
+                10, 20, LIME);
             // DrawText(TextFormat("Slices = %d", Slices), 10, 90, 20, LIME);
             // DrawText(TextFormat("GridWidth = %.2f", GridWidth), 10, 130, 20,
             //          LIME);
@@ -142,13 +145,20 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
     if (IsKeyDown(KEY_TWO)) {
         SkyRayConfig::EXPOSURE += SkyRayConfig::EXPOSURE_RATE * GetFrameTime();
     }
+    if (IsKeyPressed(KEY_I)) {
+        SkyRayConfig::USE_SPHERICAL = !SkyRayConfig::USE_SPHERICAL;
+        SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"),
+                       &SkyRayConfig::USE_SPHERICAL, SHADER_UNIFORM_INT);
+    }
 
     SetShaderValue(shader, GetShaderLocation(shader, "exposure"),
                    &SkyRayConfig::EXPOSURE, SHADER_UNIFORM_FLOAT);
 
-    Vector3 spherPos = SphericalCoordinate(cameraPos);
-    SetShaderValue(shader, GetShaderLocation(shader, "WorldCoords"), &spherPos,
+    SetShaderValue(shader, GetShaderLocation(shader, "WorldCoords"), &cameraPos,
                    SHADER_UNIFORM_VEC3);
+    Vector3 spherPos = SphericalCoordinate(cameraPos);
+    SetShaderValue(shader, GetShaderLocation(shader, "WorldCoordsSpherical"),
+                   &spherPos, SHADER_UNIFORM_VEC3);
 }
 
 // funkcja pomocnicza z raylib/examples/models/skyboxRendering.
