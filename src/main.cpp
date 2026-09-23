@@ -1,9 +1,9 @@
 #include "SkyRayConfig.hpp"
 #include "myGrid.hpp"
+#include "myGui.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
-
 static TextureCubemap GenTextureCubemap(Texture2D panorama, int size,
                                         int format);
 void UpdateShader(Shader shader, Vector3 cameraPos);
@@ -46,8 +46,8 @@ int main() {
     // InitWindow(640, 480, "SkyRay");
     // InitWindow(840, 680, "SkyRay");
     // InitWindow(1200, 900, "SkyRay");
-    // InitWindow(1920, 1200, "SkyRay");
-    InitWindow(1920, 1080, "SkyRay");
+    // InitWindow(1920, 1080, "SkyRay");
+    InitWindow(1920, 1200, "SkyRay");
     // InitWindow(2560, 1440, "SkyRay");
 
     SetWindowPosition(0, 0);
@@ -55,6 +55,7 @@ int main() {
     // ToggleBorderlessWindowed();
     DisableCursor();
 
+    // GuiLoadStyle("resources/styles/style_cherry.rgs");
     Shader shader = GetBlackHoleShader();
     Model skybox = GetSkybox(shader, "assets/starmap_2020_8k.hdr");
     Camera3D camera = GetCamera();
@@ -63,13 +64,19 @@ int main() {
                                  "resources/shaders/gridShdr.fs");
     MyGrid grid = MyGrid(50, 20, 0);
     float th = 0;
+    // test gui
+    myGui gui;
+    gui.Init();
 
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(WHITE);
 
+        gui.HandleInput();
         // UpdateCamera(&camera, CAMERA_ORBITAL);
-        UpdateCamera(&camera, CAMERA_FREE);
+        if (!gui.IsVisible()) {
+            UpdateCamera(&camera, CAMERA_FREE);
+        };
         UpdateShader(shader, camera.position);
 
         if (IsKeyPressed(KEY_O))
@@ -96,6 +103,7 @@ int main() {
 
         EndMode3D();
 
+        gui.Draw();
         if (SkyRayConfig::SHOW_DEBUG) {
             DrawFPS(10, 10);
             DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
@@ -175,10 +183,11 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
 
     if (IsKeyPressed(KEY_I)) {
         SkyRayConfig::USE_SPHERICAL = !SkyRayConfig::USE_SPHERICAL;
-        int test = SkyRayConfig::USE_SPHERICAL ? 1 : 0;
-        SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"), &test,
-                       SHADER_UNIFORM_INT);
     }
+    int test = SkyRayConfig::USE_SPHERICAL ? 1 : 0;
+    SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"), &test,
+                   SHADER_UNIFORM_INT);
+
     SetShaderValue(shader, GetShaderLocation(shader, "maxR"),
                    &SkyRayConfig::maxR, SHADER_UNIFORM_FLOAT);
 

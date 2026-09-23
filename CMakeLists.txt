@@ -18,7 +18,13 @@ FetchContent_Declare(
   GIT_TAG        6.0
   GIT_SHALLOW    ON
 )
-FetchContent_MakeAvailable(raylib)
+FetchContent_Declare(
+  raygui
+  GIT_REPOSITORY https://github.com/raysan5/raygui.git
+  GIT_TAG        5.0
+  GIT_SHALLOW    ON
+)
+FetchContent_MakeAvailable(raylib raygui)
 target_compile_definitions(raylib PRIVATE SUPPORT_FILEFORMAT_HDR=1)
 set_source_files_properties(
     ${raylib_SOURCE_DIR}/src/rtextures.c
@@ -28,5 +34,12 @@ set_source_files_properties(
 
 file(GLOB SOURCES CONFIGURE_DEPENDS src/*.cpp)
 add_executable(SkyRay ${SOURCES})
-target_include_directories(SkyRay PRIVATE include)
+target_include_directories(SkyRay SYSTEM PRIVATE
+  ${raygui_SOURCE_DIR}/src
+  ${raygui_SOURCE_DIR}/styles
+)
+target_include_directories(SkyRay PRIVATE include 
+  # ${raygui_SOURCE_DIR}/src
+  # ${raygui_SOURCE_DIR}/styles
+)
 target_link_libraries(SkyRay PRIVATE raylib)
