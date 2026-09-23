@@ -9,8 +9,9 @@ uniform float exposure;
 uniform vec3 WorldCoords; // (x, y, z)
 uniform vec3 WorldCoordsSpherical; // (r,th,phi)
 uniform float rs; // Shwarzchild radius
+uniform float maxR; // skybox radius
 
-uniform bool useSpherical = true;
+uniform bool useSpherical = false;
 // output ostateczny kolor
 out vec4 finalColor;
 
@@ -255,7 +256,7 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
                 }
 
                 if (state.r <= rs) passedHorison = true;
-                if (state.r > 20) break;
+                if (state.r > maxR) break;
         }
 
         vec3 DirSphr = vec3(state.dr, state.dth, L / pow(state.r * sin(state.th), 2.0));
@@ -330,7 +331,7 @@ vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
         StateCart state = StateCart(WorldCoords, direction);
 
         StateCart state4, state5;
-        float eps = 0.5 * 1e-3;
+        float eps = 0.3 * 1e-3;
 
         float h = 0.03;
         for (int i = 0; i < 600; i++) {
@@ -353,7 +354,7 @@ vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
                         passedHorison = true;
                         break;
                 }
-                if (r > 20) break;
+                if (r > maxR) break;
         }
 
         return state.dxyz;
