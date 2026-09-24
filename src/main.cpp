@@ -58,13 +58,13 @@ int main() {
     // GuiLoadStyle("resources/styles/style_cherry.rgs");
     Shader shader = GetBlackHoleShader();
     Model skybox = GetSkybox(shader, "assets/starmap_2020_8k.hdr");
+    // Model skybox = GetSkybox(shader, "assets/Chiemsee_bei_Seebruck_Luftbild.png");
     Camera3D camera = GetCamera();
 
     Shader gridShdr = LoadShader("resources/shaders/gridShdr.vs",
                                  "resources/shaders/gridShdr.fs");
     MyGrid grid = MyGrid(50, 20, 0);
     float th = 0;
-    // test gui
     myGui gui;
     gui.Init();
 
@@ -87,12 +87,12 @@ int main() {
         if (SkyRayConfig::ORBIT) {
             double speed = .01 * 20;
             double dt = GetFrameTime();
-            // printf("%.6f\n", dt);
             th += dt * speed;
             camera.position =
-                (Vector3){(float)cos(th), 0, (float)sin(th)} * 6.0f;
+                (Vector3){(float)cos(th), 0, (float)sin(th)} * 8.0f;
             camera.target = {0, 0, 0};
         }
+        camera.fovy = SkyRayConfig::CAMERA_FOV;
         BeginMode3D(camera);
 
         rlDisableBackfaceCulling();
@@ -101,16 +101,17 @@ int main() {
         rlEnableDepthMask();
         rlEnableBackfaceCulling();
 
+        // hotfix
+        DrawSphere({0,0,0}, 0.4f, BLACK);
+
         EndMode3D();
 
         gui.Draw();
         if (SkyRayConfig::SHOW_DEBUG) {
             DrawFPS(10, 10);
-            DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
-                     10, 50, 20, LIME);
+            // DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
+            //          10, 50, 20, LIME);
             // DrawText(
-            //     TextFormat("UseSphericaL: %d", SkyRayConfig::USE_SPHERICAL),
-            //     110, 10, 20, LIME);
             DrawText(SkyRayConfig::USE_SPHERICAL ? "Spherical" : "Cartesian",
                      110, 10, 20, LIME);
 
