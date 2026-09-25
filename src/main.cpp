@@ -1,6 +1,7 @@
+#include "MyCamera.hpp"
 #include "SkyRayConfig.hpp"
-#include "myGrid.hpp"
-#include "myGui.hpp"
+#include "MyGrid.hpp"
+#include "MyGui.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
@@ -10,34 +11,7 @@ void UpdateShader(Shader shader, Vector3 cameraPos);
 void DrawSegmentedGrid(int slices, float spacing, int subdivPerLine);
 Shader GetBlackHoleShader();
 Vector3 SphericalCoordinate(Vector3 CartesianCoordinate);
-
-Model GetSkybox(Shader shader, const char *panormaPath) {
-
-    // tworzymy skybox
-    Mesh cube = GenMeshCube(1, 1, 1);
-    Model skybox = LoadModelFromMesh(cube);
-    skybox.materials[0].shader = shader;
-
-    Texture2D panorama = LoadTexture(panormaPath); // HDR
-    int pixel_format =
-        // RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8;
-        RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16;
-    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture =
-        GenTextureCubemap(panorama, 4096, pixel_format);
-    UnloadTexture(panorama);
-
-    return skybox;
-}
-Camera3D GetCamera() {
-    Camera3D camera;
-    camera.fovy = 70.0f; // 70.0f;
-    camera.position = {7, -1, 7};
-    camera.projection = CAMERA_PERSPECTIVE;
-    camera.target = {0, 0, 0};
-    camera.up = {0, 1, 0};
-
-    return camera;
-}
+Model GetSkybox(Shader shader, const char *panormaPath);
 
 int main() {
     // SetConfigFlags(FLAG_VSYNC_HINT);
@@ -55,45 +29,27 @@ int main() {
     // ToggleBorderlessWindowed();
     DisableCursor();
 
-    // GuiLoadStyle("resources/styles/style_cherry.rgs");
     Shader shader = GetBlackHoleShader();
     Model skybox = GetSkybox(shader, "assets/starmap_2020_8k.hdr");
-    // Model skybox = GetSkybox(shader, "assets/Chiemsee_bei_Seebruck_Luftbild.png");
-    Camera3D camera = GetCamera();
+    // Model skybox =
+    //     GetSkybox(shader, "assets/Chiemsee_bei_Seebruck_Luftbild.png");
+    MyCamera myCamera = MyCamera();
 
-    Shader gridShdr = LoadShader("resources/shaders/gridShdr.vs",
-                                 "resources/shaders/gridShdr.fs");
     MyGrid grid = MyGrid(50, 20, 0);
-    float th = 0;
-    myGui gui;
+    MyGui gui;
     gui.Init();
 
     while (!WindowShouldClose()) {
+
+        gui.HandleInput();
+        myCamera.Update(GetFrameTime());
+        grid.Update();
+        UpdateShader(shader, myCamera.getCamera().position);
+
         BeginDrawing();
         ClearBackground(WHITE);
 
-        gui.HandleInput();
-        // UpdateCamera(&camera, CAMERA_ORBITAL);
-        if (!gui.IsVisible()) {
-            UpdateCamera(&camera, CAMERA_FREE);
-        };
-        UpdateShader(shader, camera.position);
-
-        if (IsKeyPressed(KEY_O))
-            SkyRayConfig::SHOW_DEBUG = !SkyRayConfig::SHOW_DEBUG;
-        if (IsKeyPressed(KEY_R))
-            SkyRayConfig::ORBIT = !SkyRayConfig::ORBIT;
-
-        if (SkyRayConfig::ORBIT) {
-            double speed = .01 * 20;
-            double dt = GetFrameTime();
-            th += dt * speed;
-            camera.position =
-                (Vector3){(float)cos(th), 0, (float)sin(th)} * 8.0f;
-            camera.target = {0, 0, 0};
-        }
-        camera.fovy = SkyRayConfig::CAMERA_FOV;
-        BeginMode3D(camera);
+        BeginMode3D(myCamera.getCamera());
 
         rlDisableBackfaceCulling();
         rlDisableDepthMask();
@@ -102,38 +58,11 @@ int main() {
         rlEnableBackfaceCulling();
 
         // hotfix
-        DrawSphere({0,0,0}, 0.4f, BLACK);
+        DrawSphere({0, 0, 0}, 0.4f, BLACK);
 
         EndMode3D();
 
-        gui.Draw();
-        if (SkyRayConfig::SHOW_DEBUG) {
-            DrawFPS(10, 10);
-            // DrawText(TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE),
-            //          10, 50, 20, LIME);
-            // DrawText(
-            DrawText(SkyRayConfig::USE_SPHERICAL ? "Spherical" : "Cartesian",
-                     110, 10, 20, LIME);
-
-            DrawText(TextFormat("rs = %.1f", SkyRayConfig::rs), 10, 90, 20,
-                     LIME);
-            DrawText(TextFormat("maxR = %.1f", SkyRayConfig::maxR), 10, 130, 20,
-                     LIME);
-            // DrawText(TextFormat("Slices = %d", Slices), 10, 90, 20, LIME);
-            // DrawText(TextFormat("GridWidth = %.2f", GridWidth), 10, 130, 20,
-            //          LIME);
-            // DrawText(TextFormat("Subdivs = %d", Subdivs), 10, 170, 20, LIME);
-            BeginMode3D(camera);
-            DrawSphere({0, 0, 0}, SkyRayConfig::rs, GOLD);
-            DrawSphereWires({0, 0, 0}, SkyRayConfig::rs * 2.6, 8, 9, LIME);
-            // DrawSphereWires({0, 0, 0}, SkyRayConfig::maxR, 8, 9, DARKBLUE);
-            DrawLine3D({0, 0, -SkyRayConfig::maxR}, {0, 0, SkyRayConfig::maxR},
-                       PINK);
-            // grid.Update();
-            // grid.Draw(gridShdr);
-            EndMode3D();
-        }
-
+        gui.Draw(myCamera, grid);
         EndDrawing();
     }
     CloseWindow();
@@ -168,25 +97,28 @@ Shader GetBlackHoleShader() {
 
     return shader;
 }
-void UpdateShader(Shader shader, Vector3 cameraPos) {
-    if (IsKeyDown(KEY_ONE)) {
-        SkyRayConfig::EXPOSURE -= SkyRayConfig::EXPOSURE_RATE * GetFrameTime();
-    }
-    if (IsKeyDown(KEY_TWO)) {
-        SkyRayConfig::EXPOSURE += SkyRayConfig::EXPOSURE_RATE * GetFrameTime();
-    }
-    if (IsKeyDown(KEY_THREE)) {
-        SkyRayConfig::maxR /= 1.03;
-    }
-    if (IsKeyDown(KEY_FOUR)) {
-        SkyRayConfig::maxR *= 1.03;
-    }
 
-    if (IsKeyPressed(KEY_I)) {
-        SkyRayConfig::USE_SPHERICAL = !SkyRayConfig::USE_SPHERICAL;
-    }
-    int test = SkyRayConfig::USE_SPHERICAL ? 1 : 0;
-    SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"), &test,
+Model GetSkybox(Shader shader, const char *panormaPath) {
+
+    // tworzymy skybox
+    Mesh cube = GenMeshCube(1, 1, 1);
+    Model skybox = LoadModelFromMesh(cube);
+    skybox.materials[0].shader = shader;
+
+    Texture2D panorama = LoadTexture(panormaPath); // HDR
+    int pixel_format =
+        // RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+        RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16;
+    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture =
+        GenTextureCubemap(panorama, 4096, pixel_format);
+    UnloadTexture(panorama);
+
+    return skybox;
+}
+void UpdateShader(Shader shader, Vector3 cameraPos) {
+
+    int UseShper = SkyRayConfig::USE_SPHERICAL ? 1 : 0;
+    SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"), &UseShper,
                    SHADER_UNIFORM_INT);
 
     SetShaderValue(shader, GetShaderLocation(shader, "maxR"),
@@ -194,6 +126,9 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
 
     SetShaderValue(shader, GetShaderLocation(shader, "exposure"),
                    &SkyRayConfig::EXPOSURE, SHADER_UNIFORM_FLOAT);
+    float eps = pow(10.0f, SkyRayConfig::LOG_EPS);
+    SetShaderValue(shader, GetShaderLocation(shader, "eps"), &eps,
+                   SHADER_UNIFORM_FLOAT);
 
     SetShaderValue(shader, GetShaderLocation(shader, "WorldCoords"), &cameraPos,
                    SHADER_UNIFORM_VEC3);

@@ -1,4 +1,4 @@
-#include "myGrid.hpp"
+#include "MyGrid.hpp"
 #include "rlgl.h"
 
 void MyGrid::Draw() {
@@ -40,9 +40,9 @@ void MyGrid::Draw() {
     }
 }
 
-void MyGrid::Draw(Shader GridShader) {
+void MyGrid::Draw(Shader shader) {
 
-    BeginShaderMode(GridShader);
+    BeginShaderMode(shader);
     Draw();
     EndShaderMode();
 }

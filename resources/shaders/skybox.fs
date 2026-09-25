@@ -10,7 +10,8 @@ uniform vec3 WorldCoords; // (x, y, z)
 uniform vec3 WorldCoordsSpherical; // (r,th,phi)
 uniform float rs; // Shwarzchild radius
 uniform float maxR; // skybox radius
-
+uniform float eps = 1e-3;
+uniform float h0 = 0.3; // initial step size
 uniform bool useSpherical = false;
 // output ostateczny kolor
 out vec4 finalColor;
@@ -233,8 +234,7 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
                 );
 
         State state4, state5;
-        float eps = 0.5 * 1e-3; // error tolerance
-        float h = 0.03; // first timestep
+        float h = h0;
 
         for (int i = 0; i < 600; i++) {
                 if (passedHorison) break;
@@ -331,9 +331,8 @@ vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
         StateCart state = StateCart(WorldCoords, direction);
 
         StateCart state4, state5;
-        float eps = 0.3 * 1e-3;
 
-        float h = 0.03;
+        float h = h0;
         for (int i = 0; i < 600; i++) {
                 // state = EulerStepCart(state, h);
 
