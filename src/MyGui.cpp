@@ -3,6 +3,7 @@
 #include "MyGui.hpp"
 #include "raygui.h"
 
+#include "cmath"
 #include "raylib.h"
 
 #include "cherry/style_cherry.h"
@@ -34,14 +35,14 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     y += rowH + gap;
     GuiLabel({x, y, w, rowH},
              TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE));
-    y += rowH + gap;
-    GuiSlider({x, y, w, rowH}, "", "", &SkyRayConfig::EXPOSURE, -2.0f, 8.0f);
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::EXPOSURE, -2.0f, 8.0f);
     y += rowH + gap;
 
     GuiLabel({x, y, w, rowH},
              TextFormat("Camera FOV = %.0f", SkyRayConfig::CAMERA_FOV));
-    y += rowH + gap;
-    GuiSlider({x, y, w, rowH}, "", "", &SkyRayConfig::CAMERA_FOV, 30, 120);
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::CAMERA_FOV, 30, 120);
     y += rowH + gap;
 
     GuiLine({x, y, w, rowH}, "Simulation Parameters");
@@ -58,8 +59,34 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     y += rowH + gap;
     GuiLabel({x, y, w, rowH},
              TextFormat("Eps = 1e%.2f", SkyRayConfig::LOG_EPS));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::LOG_EPS, -6.0f, -1.0f);
     y += rowH + gap;
-    GuiSlider({x, y, w, rowH}, "", "", &SkyRayConfig::LOG_EPS, -5.0f, -1.0f);
+    GuiLine({x, y, w, rowH}, "Accretion disk");
+    y += rowH + gap;
+    GuiCheckBox({x, y, rowH, rowH}, "Render disk", &SkyRayConfig::RENDER_DISK);
+    y += rowH + gap;
+    GuiLabel({x, y, w, rowH}, TextFormat("Inner radius = %.2f rs",
+                                         SkyRayConfig::DISK_INNER_RADIUS));
+    GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_INNER_RADIUS, 1.0f,
+              std::fmin(SkyRayConfig::DISK_OUTER_RADIUS, 4.0));
+
+    y += rowH + gap;
+    GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_OUTER_RADIUS, SkyRayConfig::DISK_INNER_RADIUS,
+              28.0f);
+    GuiLabel(
+        {x, y, (w - pad) / 2, rowH},
+        TextFormat("Outer radius = %.2f rs", SkyRayConfig::DISK_OUTER_RADIUS));
+
+    y += rowH + gap;
+
+    GuiLabel({x, y, w, rowH},
+             TextFormat("Peak T = %.0f K",
+                        pow(10.0f, SkyRayConfig::DISK_TEMP_FACTOR) * 0.488));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_TEMP_FACTOR, 3.0f, 4.91364f);
     y += rowH + gap;
 
     _panel.height = y - _panel.y + pad;
@@ -108,6 +135,8 @@ void MyGui::HandleInput() {
         SkyRayConfig::SHOW_DEBUG = !SkyRayConfig::SHOW_DEBUG;
     if (IsKeyPressed(KEY_R))
         SkyRayConfig::ORBIT = !SkyRayConfig::ORBIT;
+    if (IsKeyPressed(KEY_U))
+        SkyRayConfig::RENDER_DISK = !SkyRayConfig::RENDER_DISK;
     if (IsKeyDown(KEY_ONE)) {
         SkyRayConfig::EXPOSURE -= SkyRayConfig::EXPOSURE_RATE * GetFrameTime();
     }

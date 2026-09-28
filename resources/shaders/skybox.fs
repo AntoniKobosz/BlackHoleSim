@@ -11,8 +11,14 @@ uniform vec3 WorldCoordsSpherical; // (r,th,phi)
 uniform float rs; // Shwarzchild radius
 uniform float maxR; // skybox radius
 uniform float eps = 1e-3;
-uniform float h0 = 0.3; // initial step size
+uniform float h0 = 0.1; // initial step size
 uniform bool useSpherical = false;
+
+uniform bool renderDisk = true;
+uniform float disk_r;
+uniform float disk_R;
+uniform float t_factor;
+
 // output ostateczny kolor
 out vec4 finalColor;
 
@@ -211,7 +217,7 @@ vec3 ConvertToCartesian(vec3 WorldCoords, vec3 vector)
         return M * vector;
 }
 
-vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
+vec3 CastRaySpherical(vec3 direction /*cartesian*/ )
 {
         float r = WorldCoordsSpherical.x;
         float th = WorldCoordsSpherical.y;
@@ -227,8 +233,6 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
         float L = r * r * sin(th) * sin(th) * dphi;
         float E = sqrt(dr * dr + f * r * r * (dth * dth + sin(th) * sin(th) * dphi * dphi));
 
-        passedHorison = (r <= rs);
-
         State state = State(
                         r, th, phi, dr, dth
                 );
@@ -237,7 +241,7 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
         float h = h0;
 
         for (int i = 0; i < 600; i++) {
-                if (passedHorison) break;
+                if (state.r <= rs) return vec3(0.0, 0.0, 0.0);
                 // state = EulerStep(state, E, L, h);
                 // state = RK4Step(state, E, L, h + (state.r-rs)/800. * 0.0);
 
@@ -250,20 +254,18 @@ vec3 CastRaySpherical(vec3 direction /*cartesian*/ , out bool passedHorison)
 
                 h *= factor;
 
-                if (error < eps) {
-                        // akceptacja
-                        state = state5;
-                }
+                if (error >= eps) continue;
 
-                if (state.r <= rs) passedHorison = true;
+                // akceptacja
+                state = state5;
+
                 if (state.r > maxR) break;
         }
 
         vec3 DirSphr = vec3(state.dr, state.dth, L / pow(state.r * sin(state.th), 2.0));
         vec3 FinalCoordsSphr = vec3(state.r, state.th, state.phi);
         direction = ConvertToCartesian(FinalCoordsSphr, DirSphr);
-
-        return direction;
+        return texture(enviromentMap, direction).rgb;
 }
 struct StateCart {
         vec3 xyz;
@@ -315,25 +317,72 @@ void RK45StepCart(StateCart state, float h, out StateCart state4, out StateCart 
                         ), h);
 
         state4 = StateCart(
-                        state.xyz + k1.xyz * c1 + k3.xyz * c3 + k4.xyz * c4 + k5.xyz * c5,
-                        state.dxyz + k1.dxyz * c1 + k3.dxyz * c3 + k4.dxyz * c4 + k5.dxyz * c5
+                        state.xyz + k1.xyz * c1 + k3.xyz * c3 + k4.xyz * c4 + k5.xyz * c5, state.dxyz + k1.dxyz * c1 + k3.dxyz * c3 + k4.dxyz * c4 + k5.dxyz * c5
                 );
         state5 = StateCart(
                         state.xyz + k1.xyz * C1 + k3.xyz * C3 + k4.xyz * C4 + k5.xyz * C5 + k6.xyz * C6,
                         state.dxyz + k1.dxyz * C1 + k3.dxyz * C3 + k4.dxyz * C4 + k5.dxyz * C5 + k6.dxyz * C6
                 );
 }
+vec2 CheckDiskCollision(vec3 v1, vec3 v2, out bool diskHit) {
+        if (v1.y * v2.y > 0.0) {
+                diskHit = false;
+                return v2.xz;
+        }
+        if (v1.y == 0) {
+                diskHit = length(v1) <= disk_R * rs && length(v1) >= disk_r * rs;
+                return v1.xz;
+        }
 
-vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
+        float t = v2.y / (v2.y - v1.y);
+        float x = t * v1.x + (1 - t) * v2.x;
+        float z = t * v1.z + (1 - t) * v2.z;
+
+        vec2 uv = vec2(x, z);
+        float r = length(uv);
+        diskHit = r <= disk_R * rs && r >= disk_r * rs;
+        return uv;
+}
+float T(float r) {
+        return pow(10.0, t_factor) * pow(pow(disk_r / r, 3) * (1 - sqrt(disk_r / r)), 1 / 4.0);
+}
+vec3 BlackbodyColor(float Tk) {
+        float T = clamp(Tk, 1000.0, 40000.0);
+        float r, g, b;
+        if (T <= 6600.0) {
+                r = 1.0;
+                g = 0.390081972 * log(T) - 2.427925631;
+                b = (T <= 1900.0) ? 0.0 : 0.543206396 * log(T - 1000.0) - 3.698136688;
+        } else {
+                r = 2.4054 * pow(T - 6000.0, -0.1332047592);
+                g = 1.6 * pow(T - 6000.0, -0.0755148492);
+                b = 1.0;
+        }
+        return clamp(vec3(r, g, b), 0.0, 1.0);
+}
+vec3 DiskColor(vec2 uv) {
+        float r = length(uv);
+        float T = T(r);
+        float maxT = 0.488 * pow(10.0, t_factor);
+        vec3 c = BlackbodyColor(T);
+        float intensity = pow(T / (maxT * 0.95), 4.0);
+        c *= intensity;
+        c *= pow(2.0, exposure);
+
+        return c / (vec3(1.0) + c);
+}
+
+vec3 CastRayCartesian(vec3 direction)
 {
         float r = length(WorldCoords);
-        passedHorison = r <= rs;
+        if (r <= rs) return vec3(0.0, 0.0, 0.0);
         StateCart state = StateCart(WorldCoords, direction);
-
         StateCart state4, state5;
 
         float h = h0;
+        bool diskHit = false;
         for (int i = 0; i < 600; i++) {
+                vec3 old_pos = state.xyz;
                 // state = EulerStepCart(state, h);
 
                 RK45StepCart(state, h, state4, state5);
@@ -342,39 +391,38 @@ vec3 CastRayCartesian(vec3 direction, out bool passedHorison)
                 factor = clamp(factor, 0.2, 2.0);
 
                 h *= factor;
+                if (error > eps) continue;
 
-                if (error < eps) {
-                        // akceptacja
-                        state = state5;
-                }
+                state = state5;
 
                 r = length(state.xyz);
-                if (r <= rs) {
-                        passedHorison = true;
-                        break;
+                //test
+                h = clamp(h, 0, 0.0001 + (r - rs * 0.9) * (r - rs * 0.9) * 0.1);
+
+                if (r <= rs)
+                        return vec3(0.0, 0.0, 0.0);
+
+                if (renderDisk) {
+                        vec2 uv = CheckDiskCollision(old_pos, state.xyz, diskHit);
+                        if (diskHit) return DiskColor(uv);
                 }
                 if (r > maxR) break;
         }
 
-        return state.dxyz;
+        return texture(enviromentMap, state.dxyz).rgb * pow(2.0, exposure);
 }
 void main()
 {
         // odczytujemy kolor z kostki
-        bool passedHorison;
-        vec3 NewDir;
+        vec3 color;
+
         if (useSpherical) {
-                NewDir = CastRaySpherical(normalize(direction), passedHorison);
+                color = CastRaySpherical(normalize(direction));
         }
         else {
-                NewDir = CastRayCartesian(normalize(direction), passedHorison);
+                color = CastRayCartesian(normalize(direction));
         }
-        if (passedHorison) { // wpadł za horyzont
-                finalColor = vec4(0., 0., 0., 1.);
-                return;
-        }
-        vec3 color = texture(enviromentMap, NewDir).rgb;
 
-        color *= pow(2.0, exposure);
+        // color *= pow(2.0, exposure);
         finalColor = vec4(color, 1.0);
 }

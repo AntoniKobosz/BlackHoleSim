@@ -1,14 +1,13 @@
 #include "MyCamera.hpp"
-#include "SkyRayConfig.hpp"
 #include "MyGrid.hpp"
 #include "MyGui.hpp"
+#include "SkyRayConfig.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
 static TextureCubemap GenTextureCubemap(Texture2D panorama, int size,
                                         int format);
 void UpdateShader(Shader shader, Vector3 cameraPos);
-void DrawSegmentedGrid(int slices, float spacing, int subdivPerLine);
 Shader GetBlackHoleShader();
 Vector3 SphericalCoordinate(Vector3 CartesianCoordinate);
 Model GetSkybox(Shader shader, const char *panormaPath);
@@ -58,7 +57,7 @@ int main() {
         rlEnableBackfaceCulling();
 
         // hotfix
-        DrawSphere({0, 0, 0}, 0.4f, BLACK);
+        // DrawSphere({0, 0, 0}, 0.4f, BLACK);
 
         EndMode3D();
 
@@ -123,6 +122,8 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
 
     SetShaderValue(shader, GetShaderLocation(shader, "maxR"),
                    &SkyRayConfig::maxR, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "t_factor"),
+                   &SkyRayConfig::DISK_TEMP_FACTOR, SHADER_UNIFORM_FLOAT);
 
     SetShaderValue(shader, GetShaderLocation(shader, "exposure"),
                    &SkyRayConfig::EXPOSURE, SHADER_UNIFORM_FLOAT);
@@ -135,6 +136,13 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
     Vector3 spherPos = SphericalCoordinate(cameraPos);
     SetShaderValue(shader, GetShaderLocation(shader, "WorldCoordsSpherical"),
                    &spherPos, SHADER_UNIFORM_VEC3);
+    int render_disk = SkyRayConfig::RENDER_DISK ? 1 : 0;
+    SetShaderValue(shader, GetShaderLocation(shader, "renderDisk"),
+                   &render_disk, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, GetShaderLocation(shader, "disk_r"),
+                   &SkyRayConfig::DISK_INNER_RADIUS, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "disk_R"),
+                   &SkyRayConfig::DISK_OUTER_RADIUS, SHADER_UNIFORM_FLOAT);
 }
 
 // funkcja pomocnicza z raylib/examples/models/skyboxRendering.

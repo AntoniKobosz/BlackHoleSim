@@ -16,8 +16,33 @@ void MyCamera::Update(float dt) {
 
     _camera.fovy = SkyRayConfig::CAMERA_FOV;
     if (SkyRayConfig::ORBIT) {
-        _th += _orbitSpeed * dt;
-        _camera.position = (Vector3){cosf(_th), 0, sinf(_th)} * _orbitRadius;
+        if (IsKeyDown(KEY_A))
+            _orbitSpeed += _angAccel * dt;
+        if (IsKeyDown(KEY_D))
+            _orbitSpeed -= +_angAccel * dt;
+        if (IsKeyDown(KEY_SPACE)) {
+            _th -= _ThVel * dt;
+            if (_th < 0)
+                _th = 0;
+        }
+        if (IsKeyDown(KEY_LEFT_CONTROL)) {
+            _th += _ThVel * dt;
+            if (_th > PI)
+                _th = PI;
+        }
+        if (IsKeyDown(KEY_W)) {
+            _orbitRadius -= _Rvel * dt;
+            if(_orbitRadius <= SkyRayConfig::rs) _orbitRadius = SkyRayConfig::rs;
+        }
+
+        if (IsKeyDown(KEY_S)) {
+            _orbitRadius += _Rvel * dt;
+        }
+
+        _phi += _orbitSpeed * dt;
+        _camera.position = {cosf(_phi) * sinf(_th) * _orbitRadius,
+                            _orbitRadius * cosf(_th),
+                            sinf(_phi) * sinf(_th) * _orbitRadius};
         _camera.target = {0, 0, 0};
         return;
     }
