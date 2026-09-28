@@ -14,15 +14,16 @@ Model GetSkybox(Shader shader, const char *panormaPath);
 
 int main() {
     // SetConfigFlags(FLAG_VSYNC_HINT);
-    SetWindowState(FLAG_WINDOW_UNDECORATED);
 
     // InitWindow(640, 480, "SkyRay");
     // InitWindow(840, 680, "SkyRay");
     // InitWindow(1200, 900, "SkyRay");
     // InitWindow(1920, 1080, "SkyRay");
-    InitWindow(1920, 1200, "SkyRay");
+    // InitWindow(1920, 1200, "SkyRa ");
     // InitWindow(2560, 1440, "SkyRay");
 
+    InitWindow(GetScreenWidth(), GetScreenHeight(), "SkyRay");
+    SetWindowState(FLAG_WINDOW_UNDECORATED);
     SetWindowPosition(0, 0);
     // ToggleFullscreen();
     // ToggleBorderlessWindowed();
@@ -93,6 +94,8 @@ Shader GetBlackHoleShader() {
                    SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, GetShaderLocation(shader, "exposure"),
                    &SkyRayConfig::EXPOSURE, SHADER_UNIFORM_FLOAT);
+    int noiseLoc = GetShaderLocation(shader, "DiskNoise");
+    shader.locs[SHADER_LOC_MAP_ROUGHNESS] = noiseLoc;
 
     return shader;
 }
@@ -112,6 +115,13 @@ Model GetSkybox(Shader shader, const char *panormaPath) {
         GenTextureCubemap(panorama, 4096, pixel_format);
     UnloadTexture(panorama);
 
+    // tekstura noise dla dysku
+    Image diskNoise = GenImagePerlinNoise(1024, 1024, 0, 0, 55.0);
+
+    Texture2D diskTexture = LoadTextureFromImage(diskNoise);
+
+    skybox.materials[0].maps[MATERIAL_MAP_ROUGHNESS].texture = diskTexture;
+    UnloadImage(diskNoise);
     return skybox;
 }
 void UpdateShader(Shader shader, Vector3 cameraPos) {

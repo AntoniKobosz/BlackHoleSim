@@ -19,6 +19,7 @@ uniform float disk_r;
 uniform float disk_R;
 uniform float t_factor;
 
+uniform sampler2D DiskNoise;
 // output ostateczny kolor
 out vec4 finalColor;
 
@@ -346,6 +347,10 @@ vec2 CheckDiskCollision(vec3 v1, vec3 v2, out bool diskHit) {
 float T(float r) {
         return pow(10.0, t_factor) * pow(pow(disk_r / r, 3) * (1 - sqrt(disk_r / r)), 1 / 4.0);
 }
+vec3 Saturation(vec3 c, float s) {
+        float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+        return max(mix(vec3(l), c, s), 0.0);
+}
 vec3 BlackbodyColor(float Tk) {
         float T = clamp(Tk, 1000.0, 40000.0);
         float r, g, b;
@@ -360,16 +365,22 @@ vec3 BlackbodyColor(float Tk) {
         }
         return clamp(vec3(r, g, b), 0.0, 1.0);
 }
-vec3 DiskColor(vec2 uv) {
+vec4 DiskColor(vec2 uv) {
         float r = length(uv);
         float T = T(r);
         float maxT = 0.488 * pow(10.0, t_factor);
         vec3 c = BlackbodyColor(T);
+        float s = mix(1.0, 3.8, smoothstep(3.0, 4.9, t_factor));
+        c = Saturation(c, s /*2.6*/ );
         float intensity = pow(T / (maxT * 0.98), 4.0);
         c *= intensity;
         c *= pow(2.0, exposure / 2.0);
 
-        return c;
+        // return c;
+        float a = intensity;
+        c = c * (1 + texture(DiskNoise, 0.5 + 0.5 * uv / (2 * disk_R)).rgb);
+        // test
+        return vec4(c, a);
 }
 
 vec3 CastRayCartesian(vec3 direction)
@@ -379,8 +390,12 @@ vec3 CastRayCartesian(vec3 direction)
         StateCart state = StateCart(WorldCoords, direction);
         StateCart state4, state5;
 
+        float trans = 1.0;
+        vec3 accumColor = vec3(0.0, 0.0, 0.0); // z przecięć dysku
+
         float h = h0;
         bool diskHit = false;
+        bool pastHorison = false;
         for (int i = 0; i < 600; i++) {
                 vec3 old_pos = state.xyz;
                 // state = EulerStepCart(state, h);
@@ -399,17 +414,30 @@ vec3 CastRayCartesian(vec3 direction)
                 //test
                 h = clamp(h, 0, 0.0001 + (r - rs * 0.9) * (r - rs * 0.9) * 0.1);
 
-                if (r <= rs)
-                        return vec3(0.0, 0.0, 0.0);
+                if (r <= rs) {
+                        pastHorison = true;
+                        break;
+                }
 
                 if (renderDisk) {
                         vec2 uv = CheckDiskCollision(old_pos, state.xyz, diskHit);
-                        if (diskHit) return DiskColor(uv);
+                        if (diskHit) {
+                                vec4 diskColor = DiskColor(uv);
+                                float a = diskColor.a;
+                                accumColor += diskColor.rgb * a * trans;
+                                trans *= (1 - a);
+                        }
                 }
                 if (r > maxR) break;
         }
 
-        return texture(enviromentMap, state.dxyz).rgb * pow(2.0, exposure);
+        vec3 SkyColor = texture(enviromentMap, state.dxyz).rgb * pow(2.0, exposure);
+
+        // SkyColor = mix(SkyColor, accumColor, 1 - trans);
+        if (!pastHorison) {
+                accumColor += SkyColor * trans;
+        }
+        return accumColor;
 }
 void main()
 {

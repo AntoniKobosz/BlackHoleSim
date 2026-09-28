@@ -70,12 +70,12 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
                                          SkyRayConfig::DISK_INNER_RADIUS));
     GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
               &SkyRayConfig::DISK_INNER_RADIUS, 1.0f,
-              std::fmin(SkyRayConfig::DISK_OUTER_RADIUS, 4.0));
+              std::fmin(SkyRayConfig::DISK_OUTER_RADIUS, 3.0));
 
     y += rowH + gap;
     GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
               &SkyRayConfig::DISK_OUTER_RADIUS, SkyRayConfig::DISK_INNER_RADIUS,
-              28.0f);
+              24.0f);
     GuiLabel(
         {x, y, (w - pad) / 2, rowH},
         TextFormat("Outer radius = %.2f rs", SkyRayConfig::DISK_OUTER_RADIUS));

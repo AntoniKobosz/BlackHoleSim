@@ -1,4 +1,5 @@
 #pragma once
+#include "raylib.h"
 
 namespace SkyRayConfig {
 
@@ -15,6 +16,7 @@ inline bool GUI_VISIBLE = false;
 inline bool RENDER_DISK = true;
 inline float DISK_INNER_RADIUS = 2.3f;  // relative to rs
 inline float DISK_OUTER_RADIUS = 12.0f; // relative to rs
-inline float DISK_TEMP_FACTOR = 4.6; // szukamy lepszej
+inline float DISK_TEMP_FACTOR = 4.6;    // szukamy lepszej
 inline float DISK_INTENSITY_FACTOR = 2000;
+
 } // namespace SkyRayConfig
