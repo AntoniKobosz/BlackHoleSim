@@ -13,7 +13,7 @@ class MyCamera {
   private:
     Camera3D _camera;
     // bool _isOrbiting;
-    const float _angAccel = 0.2;
+    const float _manualSpeed = 0.5;
     const float _ThVel = 0.4;
     const float _Rvel = 7.0;
     float _phi = 0.0f;

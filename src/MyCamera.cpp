@@ -17,9 +17,9 @@ void MyCamera::Update(float dt) {
     _camera.fovy = SkyRayConfig::CAMERA_FOV;
     if (SkyRayConfig::ORBIT) {
         if (IsKeyDown(KEY_A))
-            _orbitSpeed += _angAccel * dt;
+            _phi += (_manualSpeed - _orbitSpeed) * dt;
         if (IsKeyDown(KEY_D))
-            _orbitSpeed -= +_angAccel * dt;
+            _phi -= (_manualSpeed + _orbitSpeed) * dt;
         if (IsKeyDown(KEY_SPACE)) {
             _th -= _ThVel * dt;
             if (_th < 0)
@@ -32,7 +32,8 @@ void MyCamera::Update(float dt) {
         }
         if (IsKeyDown(KEY_W)) {
             _orbitRadius -= _Rvel * dt;
-            if(_orbitRadius <= SkyRayConfig::rs) _orbitRadius = SkyRayConfig::rs;
+            if (_orbitRadius <= SkyRayConfig::rs)
+                _orbitRadius = SkyRayConfig::rs;
         }
 
         if (IsKeyDown(KEY_S)) {
