@@ -365,11 +365,11 @@ vec3 DiskColor(vec2 uv) {
         float T = T(r);
         float maxT = 0.488 * pow(10.0, t_factor);
         vec3 c = BlackbodyColor(T);
-        float intensity = pow(T / (maxT * 0.95), 4.0);
+        float intensity = pow(T / (maxT * 0.98), 4.0);
         c *= intensity;
-        c *= pow(2.0, exposure);
+        c *= pow(2.0, exposure / 2.0);
 
-        return c / (vec3(1.0) + c);
+        return c;
 }
 
 vec3 CastRayCartesian(vec3 direction)
@@ -417,7 +417,8 @@ void main()
         vec3 color;
 
         if (useSpherical) {
-                color = CastRaySpherical(normalize(direction));
+                color = CastRaySpherical(normalize(direction)) * pow(2.0, exposure);
+                // color = color / (1.0 + color);
         }
         else {
                 color = CastRayCartesian(normalize(direction));
