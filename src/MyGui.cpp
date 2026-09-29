@@ -86,7 +86,18 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
              TextFormat("Peak T = %.0f K",
                         pow(10.0f, SkyRayConfig::DISK_TEMP_FACTOR) * 0.488));
     GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
-              &SkyRayConfig::DISK_TEMP_FACTOR, 3.0f, 4.91364f);
+              &SkyRayConfig::DISK_TEMP_FACTOR, 3.31158f, 4.91364f);
+    y += rowH + gap;
+    GuiLabel({x, y, w, rowH}, TextFormat("Noise strength = %.2f",
+                                         SkyRayConfig::DISK_NOISE_STRENGTH));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_NOISE_STRENGTH, 0.0f, 0.5f);
+    y += rowH + gap;
+
+    GuiLabel({x, y, w, rowH}, TextFormat("Swirl = %.2f",
+                                         SkyRayConfig::DISK_SWIRL));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_SWIRL, -0.3f, 0.3f);
     y += rowH + gap;
 
     _panel.height = y - _panel.y + pad;

@@ -18,6 +18,8 @@ uniform bool renderDisk = true;
 uniform float disk_r;
 uniform float disk_R;
 uniform float t_factor;
+uniform float diskNoiseStrength;
+uniform float swirl;
 
 uniform sampler2D DiskNoise;
 // output ostateczny kolor
@@ -338,13 +340,11 @@ vec2 CheckDiskCollision(vec3 v1, vec3 v2, out bool diskHit) {
         float t = v2.y / (v2.y - v1.y);
         float x = t * v1.x + (1 - t) * v2.x;
         float z = t * v1.z + (1 - t) * v2.z;
-
         vec2 uv = vec2(x, z);
         float r = length(uv);
         diskHit = r <= disk_R * rs && r >= disk_r * rs;
         return uv;
-}
-float T(float r) {
+}float T(float r) {
         return pow(10.0, t_factor) * pow(pow(disk_r / r, 3) * (1 - sqrt(disk_r / r)), 1 / 4.0);
 }
 vec3 Saturation(vec3 c, float s) {
@@ -365,25 +365,37 @@ vec3 BlackbodyColor(float Tk) {
         }
         return clamp(vec3(r, g, b), 0.0, 1.0);
 }
+float SampleNoise(vec2 uv) {
+        float r = length(uv) / (disk_R * 2); //16.0; // [0, 1]
+        // float th = atan(uv.y, uv.x) / (2 * 3.1415926) + 1 / 2.0; // zakres [0, 1]
+        // return texture(DiskNoise, vec2(r , th / 3.0)).r;
+        // return texture(DiskNoise, 0.5 + 0.5 * uv / (2 * 16.0 /** disk_R*/ )).r;
+
+        float ang = atan(uv.y, uv.x) - swirl * pow(r, -1.5);
+        vec2 p0 = r * vec2(cos(ang), sin(ang));
+        p0 = p0 + 0.5;
+        return texture(DiskNoise, p0).r;
+}
 vec4 DiskColor(vec2 uv) {
         float r = length(uv);
-        float T = T(r);
         float maxT = 0.488 * pow(10.0, t_factor);
+        float n = SampleNoise(uv) - 0.1;
+        float T = T(r) * pow((1 + diskNoiseStrength * n), 0.25);
+        // T = clamp(T, 0, maxT);
         vec3 c = BlackbodyColor(T);
-        float s = mix(1.0, 3.8, smoothstep(3.0, 4.9, t_factor));
-        c = Saturation(c, s /*2.6*/ );
-        float intensity = pow(T / (maxT * 0.98), 4.0);
+        float s = mix(1.0, 3.0, smoothstep(3.0, 5.0, t_factor));
+        c = Saturation(c, s);
+        float intensity = pow(T / maxT, 4.0);
         c *= intensity;
         c *= pow(2.0, exposure / 2.0);
 
-        // return c;
-        float a = intensity;
-        c = c * (1 + texture(DiskNoise, 0.5 + 0.5 * uv / (2 * disk_R)).rgb);
-        // test
+        float a = clamp(pow(T / maxT, 4.0), 0.0, 1.0);
+        a *= (1 - smoothstep(0.75 * disk_R, disk_R, r)); // smooth disk edge
         return vec4(c, a);
 }
 
-vec3 CastRayCartesian(vec3 direction)
+vec3 CastRayCartesian(vec3
+        direction)
 {
         float r = length(WorldCoords);
         if (r <= rs) return vec3(0.0, 0.0, 0.0);

@@ -116,7 +116,7 @@ Model GetSkybox(Shader shader, const char *panormaPath) {
     UnloadTexture(panorama);
 
     // tekstura noise dla dysku
-    Image diskNoise = GenImagePerlinNoise(1024, 1024, 0, 0, 55.0);
+    Image diskNoise = GenImagePerlinNoise(1024, 1024, 0, 0, 30.0);
 
     Texture2D diskTexture = LoadTextureFromImage(diskNoise);
 
@@ -153,6 +153,10 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
                    &SkyRayConfig::DISK_INNER_RADIUS, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, GetShaderLocation(shader, "disk_R"),
                    &SkyRayConfig::DISK_OUTER_RADIUS, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "diskNoiseStrength"),
+                   &SkyRayConfig::DISK_NOISE_STRENGTH, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "swirl"),
+                   &SkyRayConfig::DISK_SWIRL, SHADER_UNIFORM_FLOAT);
 }
 
 // funkcja pomocnicza z raylib/examples/models/skyboxRendering.
