@@ -130,6 +130,10 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
     SetShaderValue(shader, GetShaderLocation(shader, "useSpherical"), &UseShper,
                    SHADER_UNIFORM_INT);
 
+    int ClampH = SkyRayConfig::CLAMP_NEAR_DISK;
+    SetShaderValue(shader, GetShaderLocation(shader, "clampNearDisk"), &ClampH,
+                   SHADER_UNIFORM_INT);
+
     SetShaderValue(shader, GetShaderLocation(shader, "maxR"),
                    &SkyRayConfig::maxR, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, GetShaderLocation(shader, "t_factor"),
@@ -155,6 +159,9 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
                    &SkyRayConfig::DISK_OUTER_RADIUS, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, GetShaderLocation(shader, "diskNoiseStrength"),
                    &SkyRayConfig::DISK_NOISE_STRENGTH, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, GetShaderLocation(shader, "diskNoiseScale"),
+                   &SkyRayConfig::DISK_NOISE_SCALE, SHADER_UNIFORM_FLOAT);
+
     SetShaderValue(shader, GetShaderLocation(shader, "swirl"),
                    &SkyRayConfig::DISK_SWIRL, SHADER_UNIFORM_FLOAT);
 }

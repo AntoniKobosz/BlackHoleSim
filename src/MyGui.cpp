@@ -32,6 +32,8 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     GuiLine({x, y, w, rowH}, "Visual Settings");
     y += rowH + gap;
     GuiCheckBox({x, y, rowH, rowH}, "Debug mode", &SkyRayConfig::SHOW_DEBUG);
+    GuiToggle({x + w / 2 + pad / 2, y, w / 2 - pad / 2, rowH}, "Orbit",
+              &SkyRayConfig::ORBIT);
     y += rowH + gap;
     GuiLabel({x, y, w, rowH},
              TextFormat("Exposure = 2^%.2f", SkyRayConfig::EXPOSURE));
@@ -54,8 +56,10 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
                   SkyRayConfig::USE_SPHERICAL ? "Spherical" : "Cartesian")) {
         SkyRayConfig::USE_SPHERICAL = !SkyRayConfig::USE_SPHERICAL;
     }
-    GuiToggle({x + w / 2 + pad / 2, y, w / 2 - pad / 2, rowH}, "Orbit",
-              &SkyRayConfig::ORBIT);
+
+    GuiCheckBox({x + w / 2 + pad / 2, y, rowH, rowH}, "Extra accuracy",
+                &SkyRayConfig::CLAMP_NEAR_DISK);
+
     y += rowH + gap;
     GuiLabel({x, y, w, rowH},
              TextFormat("Eps = 1e%.2f", SkyRayConfig::LOG_EPS));
@@ -74,8 +78,8 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
 
     y += rowH + gap;
     GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
-              &SkyRayConfig::DISK_OUTER_RADIUS, SkyRayConfig::DISK_INNER_RADIUS,
-              24.0f);
+              &SkyRayConfig::DISK_OUTER_RADIUS, SkyRayConfig::DISK_INNER_RADIUS * 2.0f,
+              SkyRayConfig::DISK_MAX_OUTER_RADIUS);
     GuiLabel(
         {x, y, (w - pad) / 2, rowH},
         TextFormat("Outer radius = %.2f rs", SkyRayConfig::DISK_OUTER_RADIUS));
@@ -93,11 +97,18 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
               &SkyRayConfig::DISK_NOISE_STRENGTH, 0.0f, 0.5f);
     y += rowH + gap;
-
-    GuiLabel({x, y, w, rowH}, TextFormat("Swirl = %.2f",
-                                         SkyRayConfig::DISK_SWIRL));
+    GuiLabel({x, y, w, rowH},
+             TextFormat("Noise scale = %.2f", SkyRayConfig::DISK_NOISE_SCALE));
     GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
-              &SkyRayConfig::DISK_SWIRL, -0.3f, 0.3f);
+              &SkyRayConfig::DISK_NOISE_SCALE, 0.5f,
+              SkyRayConfig::DISK_MAX_OUTER_RADIUS /
+                  SkyRayConfig::DISK_OUTER_RADIUS);
+    y += rowH + gap;
+
+    GuiLabel({x, y, w, rowH},
+             TextFormat("Swirl = %.2f", SkyRayConfig::DISK_SWIRL));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_SWIRL, -0.2f, 0.2f);
     y += rowH + gap;
 
     _panel.height = y - _panel.y + pad;

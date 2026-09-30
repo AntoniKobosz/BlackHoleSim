@@ -19,5 +19,5 @@ class MyCamera {
     float _phi = 0.0f;
     float _th = DEG2RAD * 85.0f;
     float _orbitRadius = 8.0f * 3;
-    float _orbitSpeed = 0.2f;
+    float _orbitSpeed = -0.2f;
 };

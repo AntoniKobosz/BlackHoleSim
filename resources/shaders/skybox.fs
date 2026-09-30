@@ -20,6 +20,9 @@ uniform float disk_R;
 uniform float t_factor;
 uniform float diskNoiseStrength;
 uniform float swirl;
+uniform float diskNoiseScale;
+
+uniform bool clampNearDisk;
 
 uniform sampler2D DiskNoise;
 // output ostateczny kolor
@@ -345,7 +348,7 @@ vec2 CheckDiskCollision(vec3 v1, vec3 v2, out bool diskHit) {
         diskHit = r <= disk_R * rs && r >= disk_r * rs;
         return uv;
 }float T(float r) {
-        return pow(10.0, t_factor) * pow(pow(disk_r / r, 3) * (1 - sqrt(disk_r / r)), 1 / 4.0);
+        return pow(10.0, t_factor) * pow(pow(disk_r * rs / r, 3) * (1 - sqrt(disk_r * rs / r)), 1 / 4.0);
 }
 vec3 Saturation(vec3 c, float s) {
         float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
@@ -366,10 +369,7 @@ vec3 BlackbodyColor(float Tk) {
         return clamp(vec3(r, g, b), 0.0, 1.0);
 }
 float SampleNoise(vec2 uv) {
-        float r = length(uv) / (disk_R * 2); //16.0; // [0, 1]
-        // float th = atan(uv.y, uv.x) / (2 * 3.1415926) + 1 / 2.0; // zakres [0, 1]
-        // return texture(DiskNoise, vec2(r , th / 3.0)).r;
-        // return texture(DiskNoise, 0.5 + 0.5 * uv / (2 * 16.0 /** disk_R*/ )).r;
+        float r = length(uv) / (16 * rs * 2 ) * diskNoiseScale; // [0, 1]
 
         float ang = atan(uv.y, uv.x) - swirl * pow(r, -1.5);
         vec2 p0 = r * vec2(cos(ang), sin(ang));
@@ -381,16 +381,16 @@ vec4 DiskColor(vec2 uv) {
         float maxT = 0.488 * pow(10.0, t_factor);
         float n = SampleNoise(uv) - 0.1;
         float T = T(r) * pow((1 + diskNoiseStrength * n), 0.25);
-        // T = clamp(T, 0, maxT);
+        T = clamp(T, 0, maxT);
         vec3 c = BlackbodyColor(T);
         float s = mix(1.0, 3.0, smoothstep(3.0, 5.0, t_factor));
         c = Saturation(c, s);
         float intensity = pow(T / maxT, 4.0);
         c *= intensity;
-        c *= pow(2.0, exposure / 2.0);
+        c *= pow(2.0, exposure / 4.0);
 
         float a = clamp(pow(T / maxT, 4.0), 0.0, 1.0);
-        a *= (1 - smoothstep(0.75 * disk_R, disk_R, r)); // smooth disk edge
+        a *= (1 - smoothstep(0.75 * disk_R * rs, disk_R * rs, r)); // smooth disk edge
         return vec4(c, a);
 }
 
@@ -424,8 +424,15 @@ vec3 CastRayCartesian(vec3
 
                 r = length(state.xyz);
                 //test
-                h = clamp(h, 0, 0.0001 + (r - rs * 0.9) * (r - rs * 0.9) * 0.1);
+                if (clampNearDisk) {
+                        const float band = 4.5;
+                        float w = smoothstep(band * rs, 3.0 * band * rs, r - rs);
+                        float hNear = 0.2 * (r - rs * 0.5) * rs;
+                        float hFar = 1e5 * rs;
+                        float hmax = mix(hNear, hFar, w);
 
+                        h = min(h, hmax);
+                }
                 if (r <= rs) {
                         pastHorison = true;
                         break;
