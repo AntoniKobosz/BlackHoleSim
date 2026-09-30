@@ -1,5 +1,6 @@
-# BlackHoleSim
+<img width="2560" height="1440" alt="screenshot004" src="https://github.com/user-attachments/assets/ba68a37c-2c6e-4804-adca-f58727bef59f" />
 
+# BlackHoleSim
 
 ## Installation
 
