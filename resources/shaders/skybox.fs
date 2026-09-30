@@ -295,8 +295,8 @@ float supremum(vec3 v) {
         return max(max(abs(v.x), abs(v.y)), abs(v.z));
 }
 float StateCartError(StateCart s1, StateCart s2) {
-        return max(supremum(s1.xyz - s2.xyz), supremum(s1.dxyz - s2.dxyz));
-        // return max(distance(s1.xyz, s2.xyz), distance(s1.dxyz, s2.dxyz));
+        return max(supremum(s1.xyz - s2.xyz), supremum(s1.dxyz - s2.dxyz)) * rs;
+        // return max(distance(s1.xyz, s2.xyz), distance(s1.dxyz, s2.dxyz)) * rs;
 }
 void RK45StepCart(StateCart state, float h, out StateCart state4, out StateCart state5)
 {
