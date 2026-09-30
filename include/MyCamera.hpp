@@ -17,7 +17,7 @@ class MyCamera {
     const float _ThVel = 0.4;
     const float _Rvel = 7.0;
     float _phi = 0.0f;
-    float _th = DEG2RAD * 85.0f;
-    float _orbitRadius = 8.0f * 3;
+    float _th = DEG2RAD * 80.0f;
+    float _orbitRadius = 10.0f;
     float _orbitSpeed = -0.2f;
 };
