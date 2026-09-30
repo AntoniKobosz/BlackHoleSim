@@ -18,8 +18,8 @@ inline float DISK_INNER_RADIUS = 2.3f;  // relative to rs
 inline float DISK_OUTER_RADIUS = 13.0f; // relative to rs
 static constexpr float DISK_MAX_OUTER_RADIUS = 16.0f;
 inline float DISK_TEMP_FACTOR = 4.0897;
-inline float DISK_NOISE_STRENGTH = 0.3;
-inline float DISK_NOISE_SCALE = 0.8f;
+inline float DISK_NOISE_STRENGTH = 0.4;
+inline float DISK_NOISE_SCALE = 0.9f;
     // DISK_MAX_OUTER_RADIUS / DISK_OUTER_RADIUS;
 inline float DISK_SWIRL = 0.1;
 inline bool CLAMP_NEAR_DISK = true;

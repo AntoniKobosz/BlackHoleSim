@@ -425,9 +425,9 @@ vec3 CastRayCartesian(vec3
                 r = length(state.xyz);
                 //test
                 if (clampNearDisk) {
-                        const float band = 4.5;
+                        const float band = 6.0;
                         float w = smoothstep(band * rs, 3.0 * band * rs, r - rs);
-                        float hNear = 0.2 * (r - rs * 0.5) * rs;
+                        float hNear = 0.4 * (r - rs * 0.5) * rs;
                         float hFar = 1e5 * rs;
                         float hmax = mix(hNear, hFar, w);
 
