@@ -57,9 +57,6 @@ int main() {
         rlEnableDepthMask();
         rlEnableBackfaceCulling();
 
-        // hotfix
-        // DrawSphere({0, 0, 0}, 0.4f, BLACK);
-
         EndMode3D();
 
         gui.Draw(myCamera, grid);

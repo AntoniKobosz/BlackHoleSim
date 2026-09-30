@@ -73,18 +73,20 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     GuiLabel({x, y, w, rowH}, TextFormat("Inner radius = %.2f rs",
                                          SkyRayConfig::DISK_INNER_RADIUS));
     GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
-              &SkyRayConfig::DISK_INNER_RADIUS, 1.0f,
+              &SkyRayConfig::DISK_INNER_RADIUS, 1.5f,
               std::fmin(SkyRayConfig::DISK_OUTER_RADIUS, 3.0));
 
     y += rowH + gap;
-    GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
-              &SkyRayConfig::DISK_OUTER_RADIUS, SkyRayConfig::DISK_INNER_RADIUS * 2.0f,
-              SkyRayConfig::DISK_MAX_OUTER_RADIUS);
-    GuiLabel(
-        {x, y, (w - pad) / 2, rowH},
-        TextFormat("Outer radius = %.2f rs", SkyRayConfig::DISK_OUTER_RADIUS));
-
-    y += rowH + gap;
+    // GuiSlider({x + w / 2 + pad / 2, y, (w - pad) / 2, rowH}, "", "",
+    //           &SkyRayConfig::DISK_OUTER_RADIUS,
+    //           SkyRayConfig::DISK_INNER_RADIUS * 2.0f,
+    //           SkyRayConfig::DISK_MAX_OUTER_RADIUS);
+    // GuiLabel(
+    //     {x, y, (w - pad) / 2, rowH},
+    //     TextFormat("Outer radius = %.2f rs",
+    //     SkyRayConfig::DISK_OUTER_RADIUS));
+    //
+    // y += rowH + gap;
 
     GuiLabel({x, y, w, rowH},
              TextFormat("Peak T = %.0f K",
