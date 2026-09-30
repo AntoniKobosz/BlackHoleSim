@@ -110,7 +110,11 @@ void MyGui::Draw(MyCamera &myCamera, MyGrid grid) {
     GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
               &SkyRayConfig::DISK_SWIRL, -0.2f, 0.2f);
     y += rowH + gap;
-
+    GuiLabel({x, y, w, rowH},
+             TextFormat("Speed = %.2f", SkyRayConfig::DISK_SPEED));
+    GuiSlider({x + (w + pad) / 2, y, (w - pad) / 2, rowH}, "", "",
+              &SkyRayConfig::DISK_SPEED, 0.001f, 1.0f);
+    y += rowH + gap;
     _panel.height = y - _panel.y + pad;
 
     if (SkyRayConfig::SHOW_DEBUG) {

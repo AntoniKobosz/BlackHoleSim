@@ -164,6 +164,13 @@ void UpdateShader(Shader shader, Vector3 cameraPos) {
 
     SetShaderValue(shader, GetShaderLocation(shader, "swirl"),
                    &SkyRayConfig::DISK_SWIRL, SHADER_UNIFORM_FLOAT);
+
+    float time = GetTime();
+    SetShaderValue(shader, GetShaderLocation(shader, "time"),
+                   &time, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shader, GetShaderLocation(shader, "disk_speed"),
+                   &SkyRayConfig::DISK_SPEED, SHADER_UNIFORM_FLOAT);
+
 }
 
 // funkcja pomocnicza z raylib/examples/models/skyboxRendering.

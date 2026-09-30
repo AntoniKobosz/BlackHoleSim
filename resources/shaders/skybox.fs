@@ -368,13 +368,23 @@ vec3 BlackbodyColor(float Tk) {
         }
         return clamp(vec3(r, g, b), 0.0, 1.0);
 }
-float SampleNoise(vec2 uv) {
-        float r = length(uv) / (16 * rs * 2 ) * diskNoiseScale; // [0, 1]
-
-        float ang = atan(uv.y, uv.x) - swirl * pow(r, -1.5);
-        vec2 p0 = r * vec2(cos(ang), sin(ang));
-        p0 = p0 + 0.5;
+uniform float time;
+uniform float disk_speed;
+float period = 1 / disk_speed;
+float SampleNoise(vec2 uv , float t){
+        float r = length(uv) / (16 * rs * 2 ) * diskNoiseScale;
+        float ang = atan(uv.y, uv.x) - swirl * pow(r, -1.5) * t / period;
+        vec2 p0 = r * vec2(cos(ang), sin(ang)) + 0.5;
         return texture(DiskNoise, p0).r;
+
+}
+
+float SampleNoise(vec2 uv){
+        float T = period;
+        float t0 = mod(time, T);
+        float t1 = mod(time + T/2, T);
+        float w = abs(2*t0/T - 1);
+        return mix(SampleNoise(uv,t0),SampleNoise(uv,t1),w);
 }
 vec4 DiskColor(vec2 uv) {
         float r = length(uv);

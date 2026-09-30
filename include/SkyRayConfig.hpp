@@ -20,7 +20,7 @@ static constexpr float DISK_MAX_OUTER_RADIUS = 16.0f;
 inline float DISK_TEMP_FACTOR = 4.0897;
 inline float DISK_NOISE_STRENGTH = 0.4;
 inline float DISK_NOISE_SCALE = 0.9f;
-    // DISK_MAX_OUTER_RADIUS / DISK_OUTER_RADIUS;
+inline float DISK_SPEED = 0.4f;
 inline float DISK_SWIRL = 0.1;
 inline bool CLAMP_NEAR_DISK = true;
 } // namespace SkyRayConfig
